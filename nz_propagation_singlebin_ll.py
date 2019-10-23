@@ -97,6 +97,7 @@ covar_cl = np.diag((cls_steps + nls)**2/((ells + 0.5) * fsky * D_ell))
 # Now let's generate some fake power spectrum data
 cls_data = np.random.multivariate_normal(cls_steps, covar_cl)
 np.savez('cls_data',
+         ls=ells,
          cls=cls_data,
          cs_covar=covar_cl)
 
