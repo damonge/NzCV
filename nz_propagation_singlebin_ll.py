@@ -108,7 +108,9 @@ covar_nz = np.diag(sigma_nz**2)
 nz_lores_data = np.random.multivariate_normal(nz_lores, covar_nz)
 np.savez('nz_data',
          nz=nz_lores_data,
-         nz_covar=covar_nz)
+         nz_covar=covar_nz,
+         z_edges_lo=z_lo,
+         z_edges_hi=z_hi)
 
 # Compare high-resolution N(z) and low-resolution slicing
 nz_smooth=nz_model(z_hires)
