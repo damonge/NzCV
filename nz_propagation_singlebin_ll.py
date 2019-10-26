@@ -16,31 +16,64 @@ def nz_model(z):
 
 # High-resolution array of redshifts
 z_hires=np.linspace(z_ini,z_end+0.5,int(nz_hires*(1+0.5/(z_end-z_ini))))
+print("nb samples")
+print(int(nz_hires*(1+0.5/(z_end-z_ini))))
+print("z_hires")
+print(z_hires.shape)
+print(z_hires)
 
 # Array containing the edges of each redshift slice
 z_lores=np.linspace(z_ini,z_end,n_zsam+1)
+print("nb samples")
+print(n_zsam+1)
+print("z_lores")
+print(z_lores.shape)
+print(z_lores)
 # Low edges
 z_lo=z_lores[:-1]
+print("z_lo")
+print(z_lo.shape)
+print(z_lo)
 # High edges
 z_hi=z_lores[1:]
+print("z_hi")
+print(z_hi.shape)
+print(z_hi)
 # Mid-point
 z_mid=0.5*(z_lo+z_hi)
+print("z_mid")
+print(z_mid.shape)
+print(z_mid)
 
 def window_step(z,z_l,z_h):
+    print("Window step"+str(z)+" "+str(z_l)+" "+str(z_h))
+    print(((np.heaviside(z-z_l,0.)-np.heaviside(z-z_h,0.0))/(z_h-z_l)).shape)
+    print((np.heaviside(z-z_l,0.)-np.heaviside(z-z_h,0.0))/(z_h-z_l))
     return (np.heaviside(z-z_l,0.)-np.heaviside(z-z_h,0.0))/(z_h-z_l)
 
 
 # Now lets generate redshift distributions for each slice
 nz_slices=np.array([window_step(z_hires,z_l,z_h)
                     for z_l,z_h in zip(z_lo,z_hi)])
+print("nz_slices")
+print(nz_slices.shape)
+print(nz_slices)
 
 # In each slice we just take the value of
 # the Gaussian above at the centre of the bin.
 nz_lores=nz_model(z_mid)
+print("nz_lores")
+print(nz_lores)
 nz_lores/=np.sum(nz_lores)
+print("nz_lores")
+print(nz_lores.shape)
+print(nz_lores)
 
 # This is our model for the redshift distribution
 nz_steps=np.einsum('j,ji', nz_lores, nz_slices)
+print("nz_steps")
+print(nz_steps.shape)
+print(nz_steps)
 
 
 # Alright, power spectra
@@ -54,6 +87,8 @@ csm=ccl.Cosmology(Omega_b=0.05,
                   h=0.67,
                   n_s=0.96,
                   Omega_k=0)
+print("csm")
+print(csm)
 
 def get_cl(cosmo,nz1,nz2):
     # This computes the power spectrum between two redshift distributions
@@ -66,6 +101,9 @@ def get_cl(cosmo,nz1,nz2):
 cls_steps=get_cl(csm,
                  (z_hires,nz_steps),
                  (z_hires,nz_steps))
+print("cls_steps")
+print(cls_steps.shape)
+print(cls_steps)
 
 # Power spectra for each pair of slices
 cls_slices=np.zeros([n_zsam,n_zsam,N_ell])
@@ -78,10 +116,15 @@ for i1 in range(n_zsam):
         if i1!=i2:
             cls_slices[i2,i1,:]=cls_slices[i1,i2,:]
 
-
+print("cls_slices")
+print(cls_slices.shape)
+print(cls_slices)
 # Now sandwich with N(z) amplitudes
 cls_sandwich=np.einsum('i,ijk,j',nz_lores,cls_slices,nz_lores)
 
+print("cls_sandwich")
+print(cls_sandwich.shape)
+print(cls_sandwich)
 
 # Let's now make some fake data
 # Noise power spectrum, assuming 10 gals/arcmin^2
@@ -90,12 +133,27 @@ ndens = 10.
 nls = sigma_gamma**2 * \
       np.ones_like(cls_steps) / \
       (ndens * (180 * 60 / np.pi)**2)
+
+print("nls")
+print(nls.shape)
+print(nls)
 # Covariance matrix (assuming 10% sky fraction)
 D_ell = (ell_end - ell_ini) / N_ell
+
+print("D_ell")
+print(D_ell)
 fsky = 0.1
 covar_cl = np.diag((cls_steps + nls)**2/((ells + 0.5) * fsky * D_ell))
+
+print("covar_cl")
+print(covar_cl.shape)
+print(covar_cl)
 # Now let's generate some fake power spectrum data
 cls_data = np.random.multivariate_normal(cls_steps, covar_cl)
+
+print("cls_data")
+print(cls_data.shape)
+print(cls_data)
 np.savez('cls_data',
          ls=ells,
          cls=cls_data,
@@ -105,8 +163,20 @@ np.savez('cls_data',
 # Let's say that we have 10% errors + some offset so we have some
 # extra constant noise (so the errors aren't 0 where N(z) is 0).
 sigma_nz = 0.1 * nz_lores + 0.02 * np.amax(nz_lores)
+
+print("sigma_nz")
+print(sigma_nz.shape)
+print(sigma_nz)
 covar_nz = np.diag(sigma_nz**2)
+
+print("covar_nz")
+print(covar_nz.shape)
+print(covar_nz)
 nz_lores_data = np.random.multivariate_normal(nz_lores, covar_nz)
+
+print("nz_lores_data")
+print(nz_lores_data.shape)
+print(nz_lores_data)
 np.savez('nz_data',
          nz=nz_lores_data,
          nz_covar=covar_nz,
