@@ -167,17 +167,12 @@ def plot_power_spectra(cls_steps, cls_sandwich, nls):
 Input: cl_data, cl_slices, covar_cl, nz, covar_nz
 Output: (-2*)log_posterior at given data
 """
-def evaluate_log_posterior(cl_data, cl_slices, covar_cl, nz, covar_nz):
+def evaluate_log_posterior(cl_data, cl_slices, inv_covar_cl, nz, covar_nz):
     ##### Log-likelihood #####
-    z_range = range(nz.shape[0])
-    l_range = range(cl_data.shape[0])
-    inv_covar_cl = np.linalg.inv(covar_cl)
-    log_likelihood = 0
-    for i, j, k, l, m, n in itertools.product(z_range, z_range, l_range, l_range, z_range, z_range):
-        if(inv_covar_cl[k,l] != 0.):
-            left_term = (nz[i] * nz[j] * cl_slices[i, j, k]) - cl_data[k]
-            right_term = (nz[m] * nz[n] * cl_slices[m, n, l]) - cl_data[l]
-            log_likelihood += left_term * inv_covar_cl[k,l] * right_term
+    cl_theory = np.einsum('i,ijk,j',nz, cl_slices, nz)
+    res = cl_data - cl_theory
+    log_likelihood = np.einsum('i,ij,j',
+                               res, inv_covar_cl, res)
     print("The (-2*)log-likelihood is: "+str(log_likelihood))
 
     ##### Log-prior #####
@@ -225,7 +220,9 @@ if __name__ == '__main__':
     ##### Build Model and Compute log-posterior according to data and cosmological parameters #####
     nz_slices = make_nz_slices(z, z_low, z_high)
     cl_slices = make_cl_slices(n_zsam, ell_size, ells, cosmo_params, z, nz_slices)
-    log_posterior = evaluate_log_posterior(cl_data, cl_slices, covar_cl, nz, covar_nz)
+    # Precompute inverse covariance
+    inv_covar_cl = np.linalg.inv(covar_cl)
+    log_posterior = evaluate_log_posterior(cl_data, cl_slices, inv_covar_cl, nz, covar_nz)
 
     ##### (Optional) Plot some fake data #####
     #plot_data(*make_fake_data(z, cosmo_params, z_start, z_end, n_zsam, ells))
