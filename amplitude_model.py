@@ -6,11 +6,13 @@ class amplitude_model:
     """
     Class representing an amplitude (e.g., number of galaxies N) model as a function of redshift z
     """
-    def __init__(self, redshift_highres_axis, redshift_lowres_axis, power_spectrum_axis):
+    def __init__(self, redshift_highres_axis, redshift_lowres_axis, power_spectrum_axis,
+                 cosmo = ccl.Cosmology(Omega_b=0.05,Omega_c=0.25,sigma8=0.8,h=0.67,n_s=0.96,Omega_k=0)):
         # Initialize user input
         self.redshift_highres_axis = redshift_highres_axis
         self.redshift_lowres_axis = redshift_lowres_axis
         self.power_spectrum_axis = power_spectrum_axis
+        self.cosmo = cosmo
 
         # Compute midpoints and edges
         self.redshift_low_edges = self.redshift_lowres_axis[:-1]
@@ -21,9 +23,6 @@ class amplitude_model:
         self.highres_amplitudes = self.get_highres_amplitudes()
         self.lowres_amplitudes = self.get_lowres_amplitudes()
         self.amplitude_steps = self.get_amplitude_steps()
-
-        # Default cosmological parameters
-        self.cosmo = ccl.Cosmology(Omega_b=0.05,Omega_c=0.25,sigma8=0.8,h=0.67,n_s=0.96,Omega_k=0)
 
         # Compute power spectra
         self.power_spectrum_steps = self.get_power_spectrum_steps()
@@ -80,13 +79,16 @@ class amplitude_model:
         for i1 in range(lowres_amplitude_dim):
             for i2 in range(i1, lowres_amplitude_dim):
                 cls_slices[i1, i2, :] = self.get_power_spectrum(self.cosmo,
-                                               (z_hires, self.highres_amplitudes[i1]),
-                                               (z_hires, self.highres_amplitudes[i2]))
+                                               (self.redshift_highres_axis, self.highres_amplitudes[i1]),
+                                               (self.redshift_highres_axis, self.highres_amplitudes[i2]))
                 if i1 != i2:
                     cls_slices[i2, i1, :] = cls_slices[i1, i2, :]
 
+        return cls_slices
+
+    def get_power_spectra_sandwich(self, power_spectra):
         # Now sandwich with N(z) amplitudes
-        cls_sandwich = np.einsum('i,ijk,j', self.lowres_amplitudes, cls_slices, self.lowres_amplitudes)
+        cls_sandwich = np.einsum('i,ijk,j', self.lowres_amplitudes, power_spectra, self.lowres_amplitudes)
         return cls_sandwich
 
     def plot_amplitudes(self):
@@ -101,24 +103,8 @@ class amplitude_model:
 
     def plot_power_spectra(self):
         plt.figure()
-        plt.plot(ells, self.power_spectrum_steps, 'b-')
-        plt.plot(ells, self.power_spectra, 'r--')
+        plt.plot(self.power_spectrum_axis, self.power_spectrum_steps, 'b-')
+        plt.plot(self.power_spectrum_axis, self.get_power_spectra_sandwich(self.power_spectra), 'r--')
         plt.loglog()
         plt.show()
-
-
-if __name__ == '__main__':
-    ### Use case example ###
-
-    # User input: 3 axes
-    z_lores = np.linspace(0, 2, 11)
-    z_hires = np.linspace(0, 2.5, 1280)
-    ells = np.linspace(100, 2000, 100)
-
-    # Build model
-    model = amplitude_model(z_hires, z_lores, ells)
-
-    # Plot
-    model.plot_amplitudes()
-    model.plot_power_spectra()
 
