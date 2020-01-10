@@ -6,12 +6,12 @@ class amplitude_model:
     """
     Class representing an amplitude (e.g., number of galaxies N) model as a function of redshift z
     """
-    def __init__(self, redshift_highres_axis, redshift_lowres_axis, power_spectrum_axis,
+    def __init__(self, redshift_highres_axis, redshift_lowres_axis, ells,
                  cosmo = ccl.Cosmology(Omega_b=0.05,Omega_c=0.25,sigma8=0.8,h=0.67,n_s=0.96,Omega_k=0)):
         # Initialize user input
         self.redshift_highres_axis = redshift_highres_axis
         self.redshift_lowres_axis = redshift_lowres_axis
-        self.power_spectrum_axis = power_spectrum_axis
+        self.ells = ells
         self.cosmo = cosmo
 
         # Compute midpoints and edges
@@ -21,12 +21,17 @@ class amplitude_model:
 
         # Compute amplitudes with respect to redshift
         self.highres_amplitudes = self.get_highres_amplitudes()
+
+        self.power_spectrum_slices = self.get_power_spectra()
+
+        '''
         self.lowres_amplitudes = self.get_lowres_amplitudes()
         self.amplitude_steps = self.get_amplitude_steps()
 
         # Compute power spectra
         self.power_spectrum_steps = self.get_power_spectrum_steps()
         self.power_spectra = self.get_power_spectra()
+        '''
 
     def get_amplitude(self, redshift):
         """
@@ -62,7 +67,7 @@ class amplitude_model:
         # Compute power spectrum between two redshift distributions
         t1 = ccl.WeakLensingTracer(cosmo, nz1)
         t2 = ccl.WeakLensingTracer(cosmo, nz2)
-        return ccl.angular_cl(cosmo, t1, t2, self.power_spectrum_axis)
+        return ccl.angular_cl(cosmo, t1, t2, self.ells)
 
     def get_power_spectrum_steps(self):
         # Power spectrum for the model redshift distribution
@@ -73,14 +78,17 @@ class amplitude_model:
 
     def get_power_spectra(self):
         # Power spectra for each pair of slices
-        lowres_amplitude_dim = len(self.lowres_amplitudes)
-        power_spectrum_dim = len(self.power_spectrum_axis)
+        lowres_amplitude_dim = len(self.redshift_lowres_axis)-1
+        power_spectrum_dim = len(self.ells)
         cls_slices = np.zeros([lowres_amplitude_dim, lowres_amplitude_dim, power_spectrum_dim])
         for i1 in range(lowres_amplitude_dim):
             for i2 in range(i1, lowres_amplitude_dim):
+                print(i1,i2)
                 cls_slices[i1, i2, :] = self.get_power_spectrum(self.cosmo,
-                                               (self.redshift_highres_axis, self.highres_amplitudes[i1]),
-                                               (self.redshift_highres_axis, self.highres_amplitudes[i2]))
+                                                                (self.redshift_highres_axis,
+                                                                 self.highres_amplitudes[i1]),
+                                                                (self.redshift_highres_axis,
+                                                                 self.highres_amplitudes[i2]))
                 if i1 != i2:
                     cls_slices[i2, i1, :] = cls_slices[i1, i2, :]
 
