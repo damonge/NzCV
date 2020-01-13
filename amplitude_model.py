@@ -1,5 +1,4 @@
-import autograd.numpy as np
-import matplotlib.pyplot as plt
+import numpy as np
 import pyccl as ccl
 
 class amplitude_model:
@@ -24,14 +23,6 @@ class amplitude_model:
 
         self.power_spectrum_slices = self.get_power_spectra()
 
-        '''
-        self.lowres_amplitudes = self.get_lowres_amplitudes()
-        self.amplitude_steps = self.get_amplitude_steps()
-
-        # Compute power spectra
-        self.power_spectrum_steps = self.get_power_spectrum_steps()
-        self.power_spectra = self.get_power_spectra()
-        '''
 
     def get_amplitude(self, redshift):
         """
@@ -49,36 +40,25 @@ class amplitude_model:
                / (redshift_higher_edge - redshift_lower_edge)
 
     def get_highres_amplitudes(self):
-        # Redshift distribution for each slice
+        """
+        Redshift distribution for each slice
+        """
         highres_amplitudes = np.array([self.evaluate_basis_function(self.redshift_highres_axis, z_l, z_h)
                               for z_l, z_h in zip(self.redshift_low_edges, self.redshift_high_edges)])
         return highres_amplitudes
-    '''
-    def get_lowres_amplitudes(self):
-        # In each slice we take the value of the Gaussian above at the centre of the bin
-        lowres_amplitudes = self.get_amplitude(self.redshift_midpoints)
-        lowres_amplitudes /= np.sum(lowres_amplitudes)
-        return lowres_amplitudes
-    
-    def get_amplitude_steps(self):
-        return np.einsum('j,ji', self.lowres_amplitudes, self.highres_amplitudes)
-    '''
+
     def get_power_spectrum(self, cosmo, nz1, nz2):
-        # Compute power spectrum between two redshift distributions
+        """
+        Compute power spectrum between two redshift distributions
+        """
         t1 = ccl.WeakLensingTracer(cosmo, nz1)
         t2 = ccl.WeakLensingTracer(cosmo, nz2)
         return ccl.angular_cl(cosmo, t1, t2, self.ells)
 
-    '''
-    def get_power_spectrum_steps(self):
-        # Power spectrum for the model redshift distribution
-        cls_steps = self.get_power_spectrum(self.cosmo,
-                           (self.redshift_highres_axis, self.amplitude_steps),
-                           (self.redshift_highres_axis, self.amplitude_steps))
-        return cls_steps
-    '''
     def get_power_spectra(self):
-        # Power spectra for each pair of slices
+        """
+        Power spectra for each pair of slices
+        """
         lowres_amplitude_dim = len(self.redshift_lowres_axis)-1
         power_spectrum_dim = len(self.ells)
         cls_slices = np.zeros([lowres_amplitude_dim, lowres_amplitude_dim, power_spectrum_dim])
@@ -93,26 +73,3 @@ class amplitude_model:
                     cls_slices[i2, i1, :] = cls_slices[i1, i2, :]
 
         return cls_slices
-    '''
-    def get_power_spectra_sandwich(self, power_spectra):
-        # Now sandwich with N(z) amplitudes
-        cls_sandwich = np.einsum('i,ijk,j', self.lowres_amplitudes, power_spectra, self.lowres_amplitudes)
-        return cls_sandwich
-
-    def plot_amplitudes(self):
-        # Compare high-resolution N(z) and low-resolution slicing
-        nz_smooth = self.get_amplitude(self.redshift_highres_axis)
-        plt.figure()
-        for n in self.highres_amplitudes:
-            plt.plot(self.redshift_highres_axis, n, 'k-', lw=1)
-        plt.plot(self.redshift_highres_axis, nz_smooth, 'r-')
-        plt.plot(self.redshift_highres_axis, self.amplitude_steps, 'b-')
-        plt.show()
-
-    def plot_power_spectra(self):
-        plt.figure()
-        plt.plot(self.power_spectrum_axis, self.power_spectrum_steps, 'b-')
-        plt.plot(self.power_spectrum_axis, self.get_power_spectra_sandwich(self.power_spectra), 'r--')
-        plt.loglog()
-        plt.show()
-    '''
