@@ -1,6 +1,6 @@
 import numpy as np
-import amplitude_model
-import probabilistic_model
+from amplitude_model import *
+from probabilistic_model import *
 
 # User input: 3 axes
 z_lores = np.linspace(0, 2, 11)
