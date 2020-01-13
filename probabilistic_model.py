@@ -32,7 +32,8 @@ class probabilistic_model:
 
 
     def get_log_posterior(self, model_amplitudes):
-        """ Compute the log posterior
+        """
+        Compute the log posterior
         Input: model_amplitudes
         Output: log_posterior at given data
         """

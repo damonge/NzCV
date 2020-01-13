@@ -20,7 +20,6 @@ class amplitude_model:
 
         # Compute amplitudes with respect to redshift
         self.highres_amplitudes = self.get_highres_amplitudes()
-
         self.power_spectrum_slices = self.get_power_spectra()
 
 
@@ -71,5 +70,4 @@ class amplitude_model:
                                                                  self.highres_amplitudes[i2]))
                 if i1 != i2:
                     cls_slices[i2, i1, :] = cls_slices[i1, i2, :]
-
         return cls_slices
