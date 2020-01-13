@@ -17,7 +17,7 @@ with np.load("cls_data.npz") as cls_data:
     ls, cl_data, covar_cl = cls_data['ls'], cls_data['cls'], cls_data['cs_covar']
 
 # Build probabilistic model based on amplitude model and observed data
-pm = probabilistic_model(model, nz, covar_nz, cl_data, np.linalg.inv(covar_cl))
+pm = probabilistic_model(model, nz, covar_nz, cl_data, covar_cl)
 
 # Compute log posterior and its gradient
 pm.get_log_posterior(nz*1.01)
