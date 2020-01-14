@@ -74,6 +74,7 @@ class probabilistic_model:
         c_part = np.einsum("kj,j",
                            self.inv_cov_amplitudes,
                            d_amplitude)
+
         grad_log_posterior = -2*(a_part - b_part) - c_part
         #print("The gradient of the log-posterior is: " + str(grad_log_posterior))
         return grad_log_posterior
