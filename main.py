@@ -30,7 +30,7 @@ print("A sensible sample would be..." + str(nz))
 initial_position = np.random.rand(10)
 nb_samples = 10
 print("The initial position is..."+str(initial_position))
-samples = hmc(logposterior_and_grad, x0=initial_position, n_samples=100, n_steps=10, epsilon=0.0001)
+samples = hmc(logposterior_and_grad, x0=initial_position, n_samples=100000, n_steps=10, epsilon=0.0001)
 print("Samples drawn: \n"+str(samples))
 
 # Plot the estimated amplitude distribution
