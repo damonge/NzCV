@@ -1,4 +1,4 @@
-import autograd.numpy as np
+import numpy as np
 
 class probabilistic_model:
     """
@@ -42,17 +42,17 @@ class probabilistic_model:
         res = self.observed_power_spectra - cl_theory
         log_likelihood = -0.5 * np.einsum('i,ij,j',
                                           res, self.inv_cov_power_spectra, res)
-        print("The log-likelihood is: " + str(log_likelihood))
+        #print("The log-likelihood is: " + str(log_likelihood))
 
 
         ##### Log-prior #####
         d_amplitude = model_amplitudes - self.observed_amplitudes
         log_prior = -0.5 * np.einsum('i,ij,j', d_amplitude, self.inv_cov_amplitudes, d_amplitude)
-        print("The log-prior is: " + str(log_prior))
+        #print("The log-prior is: " + str(log_prior))
 
         ##### Log-posterior #####
         log_posterior = log_likelihood + log_prior
-        print("The log-posterior is: " + str(log_posterior))
+        #print("The log-posterior is: " + str(log_posterior))
         return log_posterior
 
 
@@ -74,6 +74,7 @@ class probabilistic_model:
         c_part = np.einsum("kj,j",
                            self.inv_cov_amplitudes,
                            d_amplitude)
+
         grad_log_posterior = -2*(a_part - b_part) - c_part
-        print("The gradient of the log-posterior is: " + str(grad_log_posterior))
+        #print("The gradient of the log-posterior is: " + str(grad_log_posterior))
         return grad_log_posterior
